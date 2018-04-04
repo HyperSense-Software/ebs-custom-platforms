@@ -1,0 +1,73 @@
+# Proxy init.d requests through to upstart to manage Apache
+
+echo 'Equivalent Upstart operations: start apache2, stop apache2, restart apache2, status apache2'
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+
+function check_return()
+{
+  if [ "$1" != 0 ]; then
+    echo '[FAIL]'
+  else
+    echo '[OK]'
+  fi
+}
+
+function safe_restart()
+{
+  echo 'Stopping apache2'
+  stop apache2 || true
+  echo 'Starting apache2'
+  start apache2
+}
+
+# See how we were called.
+case "$1" in
+  start)
+    # Start apache2
+    echo 'Starting apache2'
+    initctl start apache2
+    RETVAL=$?
+    check_return $RETVAL
+    ;;
+  stop)
+    # Stop apache2
+    echo 'Stopping apache2'
+    initctl stop apache2
+    RETVAL=$?
+    check_return $RETVAL
+    ;;
+  status)
+    # Check if apache2 is running
+    status apache2
+    RETVAL=$?
+    ;;
+  restart)
+    # Do a hard restart. Starts apache2 if it is not running.
+    safe_restart
+    RETVAL=$?
+    check_return $RETVAL
+    ;;
+  graceful)
+    # Gracefully restarts apache2 if possible
+    echo 'Gracefully restarting apache2'
+    # Only do a graceful restart if the pid file is found
+    if [ -f /var/run/apache2/apache2.pid ]; then
+      # If the graceful restart fails, do a hard restart
+      kill -s USR1 `cat /var/run/apache2/apache2.pid` || safe_restart
+    else
+      # The pid was not found, so safely do a hard restart
+      safe_restart
+    fi
+    RETVAL=$?
+    check_return $RETVAL
+    ;;
+  *)
+    echo $"Usage: $prog {start|stop|restart|status|graceful}"
+    exit 1
+esac
+
+exit $RETVAL

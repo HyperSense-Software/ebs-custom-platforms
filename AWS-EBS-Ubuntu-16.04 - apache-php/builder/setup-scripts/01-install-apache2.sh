@@ -12,21 +12,24 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+#!/bin/bash
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+. $BUILDER_DIR/CONFIG
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+rm -rf /etc/apache2/
+
+apt-get install -y apache2
+
+#rsync -ar $BUILDER_DIR/platform-uploads/etc/apache2/ /etc/apache2/
+#chmod 755 /etc/apache2/
+#chmod 644 /etc/apache2/apache2.conf
+#chown -R root.root /etc/apache2/
+
+#chkconfig apache2 on
+systemctl start apache2
+systemctl enable apache2
+
+#enable mode rewrite
+a2enmod rewrite
+a2enmod headers
+systemctl restart apache2

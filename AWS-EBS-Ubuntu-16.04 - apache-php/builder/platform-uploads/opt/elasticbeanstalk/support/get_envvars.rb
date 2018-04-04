@@ -12,21 +12,17 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+#!/bin/env ruby
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+require 'json'
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+def get_env_vars
+    env_vars = JSON.parse(`/opt/elasticbeanstalk/bin/get-config environment`)
+    php_env_vars = JSON.parse(`/opt/elasticbeanstalk/bin/get-config optionsettings -n "aws:elasticbeanstalk:container:php:phpini"`)
+    
+    php_env_vars.each { |key, value| env_vars['PHP_' + key.upcase] = value }
+    
+    env_vars['PHP_DATE_TIMEZONE'] = 'UTC';
+
+    return env_vars
+end

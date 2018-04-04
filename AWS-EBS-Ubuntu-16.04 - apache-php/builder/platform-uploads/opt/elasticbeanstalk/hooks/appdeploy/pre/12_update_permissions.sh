@@ -12,21 +12,19 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+. /etc/PhpPlatform/platform.config
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+cd $STAGING_DIR
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+chown -R $APP_USER:$EB_APP_USER $STAGING_DIR
+chown -R $APP_USER:$EB_APP_USER /var/log/apache2
+
+# If the user is using Symfony, then fix permissions
+if [ -f app/SymfonyRequirements.php ]; then
+  echo 'Ensuring that Symfony2 cache and log dir are writable by webapp'
+
+  setfacl -R -m u:$APP_USER:rwx -m u:root:rwx app/cache app/logs
+  setfacl -dR -m u:$APP_USER:rwx -m u:root:rwx app/cache app/logs
+
+  chmod -R 1755 ./app/{cache,logs}
+fi

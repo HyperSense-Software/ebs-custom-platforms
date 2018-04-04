@@ -12,21 +12,22 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+#!/bin/env ruby
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+require 'json'
+require '/opt/elasticbeanstalk/support/get_envvars'
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+env_vars = get_env_vars
+
+leader_env_var = 'EB_IS_COMMAND_LEADER'
+
+if ENV[leader_env_var]
+    env_vars[leader_env_var] = ENV[leader_env_var]
+end
+
+staging_dir = `/opt/elasticbeanstalk/bin/get-config container -k app_staging_dir`
+
+puts JSON.dump({
+  'env' => env_vars.to_hash,
+  'cwd' => staging_dir
+})

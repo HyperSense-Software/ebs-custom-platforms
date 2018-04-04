@@ -1,0 +1,127 @@
+#!/bin/env ruby
+
+require '/opt/elasticbeanstalk/support/get_envvars'
+require 'elasticbeanstalk/exceptions'
+
+def add_slashes(str)
+    str.gsub(/['"\\\x0]/,'\\\\\0')
+end
+
+def find_value_of_boolean_str(value)
+    if ["1", "true", "on", "yes"].include?(value.downcase)
+        return "On"
+    end
+    return "Off"
+end
+
+def find_document_root(env_vars, app_ondeck_dir, app_current_dir)
+    if !env_vars.has_key?('PHP_DOCUMENT_ROOT')
+        message = "Auto-detecting DocumentRoot - ";
+
+        root_folder = app_ondeck_dir
+        if !File.directory?(app_ondeck_dir)
+            root_folder = app_current_dir
+        end
+
+        checks = {
+            "#{root_folder}/app/webroot" => {
+                'description' => 'Detected a CakePHP installation',
+                'target'      => '/app/webroot'
+            },
+            "#{root_folder}/index.php" => {
+                'description' => 'Found a /index.php file',
+                'target'      => '/'
+            },
+            "#{root_folder}/public" => {
+                'description' => 'Found a /public webroot folder',
+                'target'      => '/public'
+            },
+            "#{root_folder}/wordpress" => {
+                'description' => 'Detected a WordPress installation',
+                'target'      => '/wordpress'
+            },
+            "#{root_folder}/web" => {
+                'description' => 'Detected a Symfony2 standard edition installation',
+                'target'      => '/web'
+            },
+            '/var/www/html' => {
+                'description' => 'Could not auto-detect application. Defaulting to /',
+                'target'      => '/'
+            }
+        }
+
+        check.each do |path, check|
+            if File.file?(path)
+                message << "#{check['description']}: Setting DocumentRoot to #{check['target']}"
+                env_vars['PHP_DOCUMENT_ROOT'] = check['target']
+            end
+        end
+
+        message << " (Specify a DocumentRoot setting to disable auto-detection)."
+        puts message
+    else
+        puts "Using configuration value for DocumentRoot: #{env_vars['PHP_DOCUMENT_ROOT']}";
+    end
+    
+    if !env_vars['PHP_DOCUMENT_ROOT'].start_with?('/')
+        env_vars['PHP_DOCUMENT_ROOT'] = '/' + env_vars['PHP_DOCUMENT_ROOT']
+    end
+end
+
+def update_apache_env_vars(env_vars)
+    # Update the apache environment variables
+    output = ''
+    env_vars.each do |key, value|
+        value = add_slashes(value)
+        output << "SetEnv #{key} \"#{add_slashes(value)}\"\n"
+    end
+    File.open('/etc/apache2/conf-enabled/aws_env.conf', 'w') { |f| f.write(output) }
+
+    # Update /etc/apache2/apache2.conf
+    conf = File.read('/etc/apache2/apache2.conf')
+    # Update apache to use the user-supplied document root
+    conf.gsub!(/DocumentRoot "*.*"*/, "DocumentRoot \"/var/www/html#{env_vars['PHP_DOCUMENT_ROOT']}\"")
+    File.open('/etc/apache2/apache2.conf', 'w') { |f| f.write(conf) }
+end
+
+
+def update_php_env_vars(env_vars, app_logs_dir)
+    # Maintain BC compatibility with the old container by providing a /etc/php.d/environment.ini file
+    # Add old option values for BC compatibility
+    output = ""
+    
+    env_vars.each do |key, value|
+        output << key << '="' << add_slashes(value) << "\"\n"
+        output << "aws." << key.downcase << '="' << add_slashes(value) << "\"\n"
+    end
+    
+    output << "aws.log_dir=\"#{app_logs_dir}\"\n"
+    
+    File.open('/etc/php.d/environment.ini', 'w') { |f| f.write(output) }
+
+    # Massage booleans into On or Off
+    env_vars['PHP_DISPLAY_ERRORS'] = find_value_of_boolean_str(env_vars['PHP_DISPLAY_ERRORS'])
+    env_vars['PHP_ZLIB_OUTPUT_COMPRESSION'] = find_value_of_boolean_str(env_vars['PHP_ZLIB_OUTPUT_COMPRESSION'])
+    env_vars['PHP_ALLOW_URL_FOPEN'] = find_value_of_boolean_str(env_vars['PHP_ALLOW_URL_FOPEN'])
+
+    # Update the /etc/php.d/aws.ini file
+    ini = "; This file is auto-generated based on configuration settings\n"
+    ini << "max_execution_time = #{env_vars['PHP_MAX_EXECUTION_TIME']}\n"
+    ini << "memory_limit = #{env_vars['PHP_MEMORY_LIMIT']}\n"
+    ini << "display_errors = #{env_vars['PHP_DISPLAY_ERRORS']}\n"
+    ini << "allow_url_fopen = #{env_vars['PHP_ALLOW_URL_FOPEN']}\n"
+    ini << "zlib.output_compression = #{env_vars['PHP_ZLIB_OUTPUT_COMPRESSION']}\n"
+        
+    File.open('/etc/php.d/aws.ini', 'w') { |f| f.write(ini) }
+end
+
+if __FILE__ == $0
+    env_vars = get_env_vars
+    staging_dir = `/opt/elasticbeanstalk/bin/get-config container -k app_staging_dir`
+    deploy_dir = `/opt/elasticbeanstalk/bin/get-config container -k app_deploy_dir`
+    logs_dir = `/opt/elasticbeanstalk/bin/get-config container -k app_logs_dir` 
+    
+    find_document_root(env_vars, staging_dir, deploy_dir)
+    update_apache_env_vars(env_vars)
+    update_php_env_vars(env_vars, logs_dir)    
+end

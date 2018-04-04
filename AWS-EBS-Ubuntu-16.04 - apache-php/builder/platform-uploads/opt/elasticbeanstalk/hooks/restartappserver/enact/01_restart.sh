@@ -12,21 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+set -e
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
-
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+# Since this is a failsafe, force a hard restart
+service apache2 restart

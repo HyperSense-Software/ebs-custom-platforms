@@ -1,0 +1,41 @@
+#Copyright 2003-2018 HyperSense Software SRL
+#
+#Licensed under the Apache License, Version 2.0 (the "License");
+#you may not use this file except in compliance with the License.
+#You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#Unless required by applicable law or agreed to in writing, software
+#distributed under the License is distributed on an "AS IS" BASIS,
+#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#See the License for the specific language governing permissions and
+#limitations under the License.
+
+
+########################
+# $BUILDER_DIR is a magic property set by the builder.sh script automatically
+#########################
+
+####################
+### SECURE LINUX ###
+####################
+USE_SELINUX=false
+
+######################
+## BEANSTALK CONFIG ##
+######################
+BEANSTALK_DIR="/opt/elasticbeanstalk"
+SETUP_HOOKS_DIR="$BUILDER_DIR/uploads/opt/elasticbeanstalk/hooks"
+SETUP_LOGS_DIR="$BUILDER_DIR/uploads/opt/elasticbeanstalk/tasks"
+
+# CONSTANTS
+STAGING_NAME="staging"
+LIVE_NAME="current"
+DIR_PREFIX="/var/app"
+EB_DIR="/opt/elasticbeanstalk"
+
+### APP DIRS ###
+STAGING_DIR="$DIR_PREFIX/$STAGING_NAME"
+LIVE_DIR="$DIR_PREFIX/$LIVE_NAME"
+CONFIG_DIR="$DIR_PREFIX/config/"

@@ -12,21 +12,10 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+#!/bin/bash -xe
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+chown www-data.www-data /var/log/apache2/healthd/
+chown www-data.www-data /usr/share/apache2/html/
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+rm -rf /var/www/html
+ln -s /var/app/current /var/www/html

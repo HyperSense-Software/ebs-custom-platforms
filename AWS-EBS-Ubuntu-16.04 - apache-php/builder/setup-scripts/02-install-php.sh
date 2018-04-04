@@ -12,21 +12,9 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+#!/bin/bash -xe
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+. $BUILDER_DIR/CONFIG
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+apt-get update
+apt-get install php php-common php-recode php-tidy php-xmlrpc php-pspell php-sqlite3 php-memcache php-mbstring php-imap php-intl php-gd php-imagick php-apcu php-curl php-dom libapache2-mod-php php-mcrypt php-mysql -y

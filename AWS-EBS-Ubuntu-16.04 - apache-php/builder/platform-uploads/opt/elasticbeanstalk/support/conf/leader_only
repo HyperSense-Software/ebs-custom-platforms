@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+[ "$EB_IS_COMMAND_LEADER" == "true" ] && $*

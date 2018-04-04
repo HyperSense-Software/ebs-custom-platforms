@@ -12,21 +12,19 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-version: "1.0"
+#!/bin/env ruby
 
-provisioner:
-  type: packer
-  template: custom_platform.json
-  flavor: amazon
+require '/opt/elasticbeanstalk/support/get_envvars'
 
-metadata:
-  maintainer: Andrei Neacsu
-  description: Amazon OS nginx php php-pfm
-  operating_system_name: Amazon linux
-  operating_system_version: 2016.09.1
-  programming_language_name: ECMAScript
-  programming_language_version: ECMA-262
-  framework_name: HPH
-  framework_version: 7.1
-  app_server_name: "none"
-  app_server_version: "none"
+if __FILE__ == $0
+    env_file = '/opt/elasticbeanstalk/support/envvars'
+    env_vars = get_env_vars
+
+    str = ''
+    env_vars.each do |key, value|
+        new_key = key.gsub(/\s/, '_')
+        str << "export #{new_key}=\"#{value}\"\n"
+    end
+    
+    File.open(env_file, 'w') { |f| f.write(str) }
+end
