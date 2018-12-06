@@ -7,4 +7,4 @@ Visit https://hypersense-software.com/2018/03/12/aws-elastic-beanstalk-nginx-php
 
 # AWS-EBS-Ubuntu-16.04 - apache-php
 Custom platform for AWS Elastic Beanstalk - Ubuntu 16.04 with apache2 and php 7.0
-Visit https://hypersense-software.com/2018/04/03/aws-beanstalk-ubuntu-16-04-php/ for more information.
+Visit https://hypersense-software.com/2018/04/04/aws-beanstalk-ubuntu-16-04-php/ for more information.
